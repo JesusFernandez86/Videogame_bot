@@ -1,3 +1,4 @@
+from datetime import datetime
 import pyautogui
 import cv2
 import numpy as np
@@ -7,59 +8,48 @@ import json
 import threading
 
 Stop_recording = False
-file = "actions_test_10-07-2020_15-56-43.json"
+
 
 def main():
-
+    files = ["actions_test_10-07-2020_15-56-43.json", "actions_test_10-08-2020_14-59-00.json", "actions_test_10-09"
+             "-2020_10-51-19.json", "actions_test_10-19-2020_15-49-55.json"]
     initializePyAutoGUI()
     countdownTimer()
-    t1 = threading.Thread(target=playActions, args=[file])
-    t2 = threading.Thread(target=recordScreen)
+    for i in range(len(files)):
+        global Stop_recording
+        Stop_recording = False
+        t1 = threading.Thread(target=playActions, args=[files[i]])
+        t2 = threading.Thread(target=recordScreen)
 
-    t1.start()
-    t2.start()
+        t1.start()
+        t2.start()
 
-    t1.join()
-    t2.join()
+        t1.join()
+        t2.join()
 
     print("Done")
 
 
 def recordScreen():
-    output = "video.avi"
+    date = datetime.today().strftime("%m-%d-%Y_%H-%M-%S")
+    output = '{}.avi'.format(date)
     img = pyautogui.screenshot()
     img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     # get info from img
     height, width, channels = img.shape
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output, fourcc, 100.0, (width, height))
+    out = cv2.VideoWriter(output, fourcc, 20.0, (width, height))
 
     while not Stop_recording:
-        try:
-            img = pyautogui.screenshot()
-            image = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-            out.write(image)
-            StopIteration(0.5)
-        except KeyboardInterrupt:
-            break
+        img = pyautogui.screenshot()
+        image = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        out.write(image)
+        # StopIteration(0.5)
 
     out.release()
     cv2.destroyAllWindows()
 
-def initializePyAutoGUI():
-    # Initialized PyAutoGUI
-    # When fail-safe mode is True, moving the mouse to the upper-left corner will abort your program.
-    pyautogui.FAILSAFE = False
-
-
-def countdownTimer():
-    # Countdown timer
-    print("Starting", end="", flush=True)
-    for i in range(0, 3):
-        print(".", end="", flush=True)
-        sleep(1)
-    print("Go")
 
 def playActions(filename):
     # Read the file
@@ -116,9 +106,23 @@ def playActions(filename):
                 elapsed_time = 0
             print('sleeping for {}'.format(elapsed_time))
             sleep(elapsed_time)
-            STOP_RECORDING = True
     global Stop_recording
     Stop_recording = True
+
+
+def initializePyAutoGUI():
+    # Initialized PyAutoGUI
+    # When fail-safe mode is True, moving the mouse to the upper-left corner will abort your program.
+    pyautogui.FAILSAFE = False
+
+
+def countdownTimer():
+    # Countdown timer
+    print("Starting", end="", flush=True)
+    for i in range(0, 3):
+        print(".", end="", flush=True)
+        sleep(1)
+    print("Go")
 
 
 # convert pynput button keys into pyautogui keys
@@ -140,7 +144,6 @@ def convertKey(button):
         'print_screen': 'printscreen',
         'scroll_lock': 'scrolllock',
     }
-    # example: 'Key.F9' should return 'F9', 'w' should return as 'w'
     cleaned_key = button.replace('Key.', '')
 
     if cleaned_key in PYNPUT_SPECIAL_CASE_MAP:
